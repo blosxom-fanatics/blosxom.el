@@ -14,6 +14,10 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 
 (require 'cl)
 
+(setf output-buffer (get-buffer-create "*BlosxomElisp"))
+(set-buffer output-buffer)
+(erase-buffer)
+
 ; http://subtech.g.hatena.ne.jp/antipop/20071023/1193150099
 (defun apply-template (place flavour)
   (setf file (concat place flavour))
@@ -79,14 +83,14 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 (defun matches (regexp str)
   (if (string-match regexp str)
     (progn
-          (setf m (match-data))
-          (loop for x below 10
-                if (match-beginning x)
-                collect
-                (substring str (match-beginning x) (match-end x))
-          ))
+      (setf m (match-data))
+      (loop for x below 10
+            if (match-beginning x)
+            collect
+            (substring str (match-beginning x) (match-end x))
+            ))
     nil
-  ))
+    ))
 
 (setf title "blosxom.el !")
 (setf author "Joe")
@@ -114,10 +118,11 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
                  (setf timea (cdr (assoc 'time a)))
                  (setf timeb (cdr (assoc 'time b)))
 
-                 (if (= (car timea) (car timeb))
-                   (<  (cadr timea) (cadr timeb))
-                   (<  (car timea) (car timeb))
-                 )))
+                 (if
+                   (= (car  timea) (car  timeb))
+                   (< (cadr timea) (cadr timeb))
+                   (< (car  timea) (car  timeb))
+                   )))
 
 ; filter
 (setf entries (loop for e in entries
@@ -145,14 +150,14 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 
 (setf lastupdate (format-time-string "%Y-%m-%dT%H:%M:%SZ" (cdr (assoc 'time (car entries)))))
 
-(princ (concat "Content-Type: " (apply-template "content_type" flavour) "\n"))
-(princ (apply-template "head" flavour))
+(insert (concat "Content-Type: " (apply-template "content_type" flavour) "\n"))
+(insert (apply-template "head" flavour))
 
 (loop for e in entries do
       (multiple-value-bind (title body) (split-entry-body (cdr (assoc 'path e))))
-      (setf name (cdr (assoc 'name e)))
-      (setf path (cdr (assoc 'name e)))
-      (setf time (cdr (assoc 'time e)))
+      (setf name   (cdr (assoc 'name e)))
+      (setf path   (cdr (assoc 'name e)))
+      (setf time   (cdr (assoc 'time e)))
       (setf w3cdtf (format-time-string "%Y-%m-%dT%H:%M:%SZ" time))
       (setf yr     (format-time-string "%Y"  time))
       (setf mo     (format-time-string "%b"  time))
@@ -164,10 +169,10 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
       (setf hr12   (format-time-string "%I"  time))
       (setf ampm   (format-time-string "%p"  time))
       (setf ti     (format-time-string "%X"  time))
-      (princ (apply-template "story" flavour))
+      (insert (apply-template "story" flavour))
       )
 ;(print entries)
 
-(princ (apply-template "foot" flavour))
+(insert (apply-template "foot" flavour))
 
-
+(princ (buffer-string))
