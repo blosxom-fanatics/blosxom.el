@@ -2,6 +2,9 @@
 #@63
 LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 ; set LANG for format-time-string
+; vim:expandtab:
+; I'm a vimmer.
+; License:: Creative Commons by
 
 (set-default-coding-systems 'utf-8)
 (set-terminal-coding-system 'utf-8)
