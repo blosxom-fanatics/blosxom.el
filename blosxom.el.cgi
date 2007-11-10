@@ -1,7 +1,13 @@
 #!/bin/sh
 #@63
 LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
+; set LANG for format-time-string
 
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-buffer-file-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
 
 (require 'cl)
 
@@ -12,12 +18,10 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
       (set-buffer buffer)
       (erase-buffer)
       (insert-file-contents file)
-      (while (re-search-forward "\\$\\([a-zA-Z]+\\)" nil t)
+      (while (re-search-forward "\\$\\([a-zA-Z_-]+\\)" nil t)
              (replace-match (symbol-value (intern (match-string 1))) nil nil))
       (prog1 (buffer-string)
         (kill-buffer nil)))))
-
-
 
 (defun replace (str match-str replace-str)
   (save-current-buffer
@@ -72,6 +76,8 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 (setf author "Joe")
 
 (setf home (or (getenv "SCRIPT_NAME") ""))
+(setf pathinfo (or (getenv "PATH_INFO") ""))
+(setf pathname (replace pathinfo "\\(index\\)?\\..+$" ""))
 (setf version (emacs-version))
 ;(print system-configuration)
 ;(print system-name)
@@ -84,8 +90,9 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 (princ (concat "Content-Type: " (apply-template "content_type.html") "\n"))
 (princ (apply-template "head.html"))
 
-
 (setf entries (list-entries "data" "data"))
+
+; sort by mtime
 (sort entries '(lambda (a b)
                  (setf timea (cdr (assoc 'time a)))
                  (setf timeb (cdr (assoc 'time b)))
@@ -95,6 +102,17 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
                      (+ (* 65535 (car timeb)) (cadr timeb))
                      )
                  ))
+
+; filter
+(setf entries (loop for e in entries
+                    if (progn
+                         (setf name (cdr (assoc 'name e)))
+                         (setf time (cdr (assoc 'time e)))
+                         ; (string= "2007" (format-time-string "%Y" time))
+                         (string-match (concat "^" pathname) name)
+                         )
+                    collect e))
+
 (setf entries (last entries 7))
 (setf entries (nreverse entries))
 (loop for e in entries do
