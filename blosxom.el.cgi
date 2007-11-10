@@ -114,11 +114,10 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
                  (setf timea (cdr (assoc 'time a)))
                  (setf timeb (cdr (assoc 'time b)))
 
-                 ; どうすればいいだろう……
-                 (<  (+ (* 65535 (car timea)) (cadr timea))
-                     (+ (* 65535 (car timeb)) (cadr timeb))
-                     )
-                 ))
+                 (if (= (car timea) (car timeb))
+                   (<  (cadr timea) (cadr timeb))
+                   (<  (car timea) (car timeb))
+                 )))
 
 ; filter
 (setf entries (loop for e in entries
