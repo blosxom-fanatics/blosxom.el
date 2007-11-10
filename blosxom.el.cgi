@@ -12,13 +12,14 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 (require 'cl)
 
 ; http://subtech.g.hatena.ne.jp/antipop/20071023/1193150099
-(defun apply-template (file)
+(defun apply-template (place flavour)
+  (setf file (concat place flavour))
   (save-current-buffer
     (let ((buffer (get-buffer-create "*TemplateProcessing*")))
       (set-buffer buffer)
       (erase-buffer)
       (insert-file-contents file)
-      (while (re-search-forward "\\$\\([a-zA-Z_-]+\\)" nil t)
+      (while (re-search-forward "\\$\\([0-9a-zA-Z_-]+\\)" nil t)
              (replace-match (symbol-value (intern (match-string 1))) nil nil))
       (prog1 (buffer-string)
         (kill-buffer nil)))))
@@ -72,13 +73,28 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
     ret)
   )
 
+(defun matches (regexp str)
+  (if (string-match regexp str)
+    (progn
+          (setf m (match-data))
+          (loop for x below 10
+                if (match-beginning x)
+                collect
+                (substring str (match-beginning x) (match-end x))
+          ))
+    nil
+  ))
+
 (setf title "blosxom.el !")
 (setf author "Joe")
 
+(setf servername (concat "http://" (or (getenv "SERVER_NAME") "")))
 (setf home (or (getenv "SCRIPT_NAME") ""))
-(setf pathinfo (or (getenv "PATH_INFO") ""))
+(setf pathinfo (or (getenv "PATH_INFO") "/index.xml"))
 (setf pathname (replace pathinfo "\\(index\\)?\\..+$" ""))
 (setf version (emacs-version))
+
+(setf flavour (or (nth 1 (matches "\\(\\..+\\)$" pathinfo)) ".html"))
 ;(print system-configuration)
 ;(print system-name)
 
@@ -86,9 +102,6 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 ;(print invocation-name)
 ;(print process-environment)
 
-
-(princ (concat "Content-Type: " (apply-template "content_type.html") "\n"))
-(princ (apply-template "head.html"))
 
 (setf entries (list-entries "data" "data"))
 
@@ -115,6 +128,12 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 
 (setf entries (last entries 7))
 (setf entries (nreverse entries))
+
+(setf lastupdate (format-time-string "%Y-%m-%dT%H:%M:%SZ" (cdr (assoc 'time (car entries)))))
+
+(princ (concat "Content-Type: " (apply-template "content_type" flavour) "\n"))
+(princ (apply-template "head" flavour))
+
 (loop for e in entries do
       (multiple-value-bind (title body) (split-entry-body (cdr (assoc 'path e))))
       (setf name (cdr (assoc 'name e)))
@@ -131,10 +150,10 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
       (setf hr12   (format-time-string "%I"  time))
       (setf ampm   (format-time-string "%p"  time))
       (setf ti     (format-time-string "%X"  time))
-      (princ (apply-template "story.html"))
+      (princ (apply-template "story" flavour))
       )
 ;(print entries)
 
-(princ (apply-template "foot.html"))
+(princ (apply-template "foot" flavour))
 
 

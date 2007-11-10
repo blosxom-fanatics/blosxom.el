@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>$title</title>
+    <link href="$servername$home$pathinfo"/>
+    <updated>$lastupdate</updated>
+    <author>
+        <name>$author</name>
+    </author>
+    <id>$servername$home$pathinfo</id>
+
+

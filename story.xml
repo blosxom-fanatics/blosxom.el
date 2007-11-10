@@ -1,0 +1,11 @@
+<entry>
+    <title>$title</title>
+    <link href="$servername$home$path"/>
+    <id>$servername$home$path</id>
+    <updated>$w3cdtf</updated>
+    <content type="xhtml" xml:base="$servername">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            $body
+        </div>
+    </content>
+    </entry>
