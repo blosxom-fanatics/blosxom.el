@@ -90,11 +90,12 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
 
 (setf servername (concat "http://" (or (getenv "SERVER_NAME") "")))
 (setf home (or (getenv "SCRIPT_NAME") ""))
-(setf pathinfo (or (getenv "PATH_INFO") "/index.xml"))
+(setf pathinfo (or (getenv "PATH_INFO") ""))
 (setf pathname (replace pathinfo "\\(index\\)?\\..+$" ""))
 (setf version (emacs-version))
 
 (setf flavour (or (nth 1 (matches "\\(\\..+\\)$" pathinfo)) ".html"))
+(setf splitted-pathinfo (matches "^/\\([0-9]+\\)\\(/[0-9][0-9]\\)?\\(/[0-9][0-9]\\)?" pathinfo))
 ;(print system-configuration)
 ;(print system-name)
 
@@ -122,7 +123,18 @@ LANG=C exec /usr/bin/emacs -Q --batch --no-unibyte --kill -l $0
                          (setf name (cdr (assoc 'name e)))
                          (setf time (cdr (assoc 'time e)))
                          ; (string= "2007" (format-time-string "%Y" time))
-                         (string-match (concat "^" pathname) name)
+                         (cond ((nth 3 splitted-pathinfo)
+                                (string= (format-time-string "%Y/%m/%d" time) (apply 'concat (cdr splitted-pathinfo)))
+                                )
+                               ((nth 2 splitted-pathinfo)
+                                (string= (format-time-string "%Y/%m" time) (apply 'concat (cdr splitted-pathinfo)))
+                                )
+                               ((nth 1 splitted-pathinfo)
+                                (string= (format-time-string "%Y" time) (nth 1 splitted-pathinfo))
+                                )
+                               (t
+                                 (string-match (concat "^" pathname) name)
+                                 ))
                          )
                     collect e))
 
